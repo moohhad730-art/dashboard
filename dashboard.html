@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة متابعة دار مدة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --cream:#F5EFE1;
+    --paper:#FBF7EC;
+    --card:#FFFFFF;
+    --ink:#2A241A;
+    --ink-soft:#6b6152;
+    --green-deep:#233D2F;
+    --green:#2F4E3C;
+    --green-soft:#5C7A63;
+    --gold:#B8862E;
+    --gold-soft:#E4C77E;
+    --line:#E5DCC5;
+    --danger:#A83D2C;
+    --danger-soft:#F5E1DB;
+    --warn:#B8862E;
+    --warn-soft:#F6EAD0;
+    --ok:#2F6B4F;
+    --ok-soft:#E1EEE4;
+    --radius:10px;
+    --shadow:0 1px 2px rgba(42,36,26,.06), 0 6px 18px rgba(42,36,26,.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(184,134,46,0.06), transparent 40%),
+      radial-gradient(circle at 0% 100%, rgba(35,61,47,0.05), transparent 45%);
+    color:var(--ink);
+    font-family:'Tajawal', sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3, .display{
+    font-family:'Aref Ruqaa', serif;
+  }
+  ::selection{ background: var(--gold-soft); }
+
+  .app{
+    display:flex;
+    min-height:100vh;
+    max-width:1400px;
+    margin:0 auto;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:236px;
+    flex:none;
+    padding:26px 18px;
+    border-left:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+  }
+  .brand{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    padding:0 6px;
+  }
+  .brand .mark{
+    font-family:'Aref Ruqaa', serif;
+    font-size:30px;
+    font-weight:700;
+    color:var(--green-deep);
+    line-height:1.1;
+  }
+  .brand .sub{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    letter-spacing:.2px;
+  }
+  nav.tabs{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  nav.tabs button{
+    all:unset;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:14.5px;
+    color:var(--ink-soft);
+    transition:background .15s, color .15s;
+  }
+  nav.tabs button svg{ flex:none; opacity:.8; }
+  nav.tabs button:hover{ background:rgba(47,78,60,.07); color:var(--green-deep); }
+  nav.tabs button.active{
+    background:var(--green-deep);
+    color:var(--paper);
+  }
+  nav.tabs button.active svg{ opacity:1; }
+  .sidebar-footer{
+    margin-top:auto;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    padding:0 6px;
+    line-height:1.7;
+  }
+
+  /* ---------- Main ---------- */
+  .main{
+    flex:1;
+    min-width:0;
+    padding:26px 30px 60px;
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:26px;
+    flex-wrap:wrap;
+  }
+  .topbar .title{
+    font-size:22px;
+    font-weight:700;
+    color:var(--green-deep);
+  }
+  .topbar .title .muted{
+    font-family:'Tajawal';
+    font-size:13px;
+    font-weight:400;
+    color:var(--ink-soft);
+    display:block;
+    margin-top:3px;
+  }
+  .seg{
+    display:flex;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:3px;
+    gap:2px;
+  }
+  .seg button{
+    all:unset;
+    cursor:pointer;
+    padding:7px 16px;
+    border-radius:999px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .seg button.active{
+    background:var(--green-deep);
+    color:#fff;
+  }
+
+  section.tab{ display:none; animation:fade .25s ease; }
+  section.tab.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  /* KPI cards */
+  .kpis{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(190px,1fr));
+    gap:14px;
+    margin-bottom:22px;
+  }
+  .kpi{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    box-shadow:var(--shadow);
+  }
+  .kpi .label{ font-size:12.5px; color:var(--ink-soft); margin-bottom:8px; }
+  .kpi .value{ font-size:24px; font-weight:700; color:var(--green-deep); }
+  .kpi .value.danger{ color:var(--danger); }
+  .kpi .sub{ font-size:11.5px; color:var(--ink-soft); margin-top:4px;}
+
+  .grid-2{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:16px;
+    margin-bottom:20px;
+  }
+  @media (max-width:900px){ .grid-2{ grid-template-columns:1fr; } }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    box-shadow:var(--shadow);
+  }
+  .card h3{
+    margin:0 0 14px;
+    font-size:16px;
+    color:var(--green-deep);
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .card h3 span.tag{
+    font-family:'Tajawal';
+    font-size:11.5px;
+    font-weight:500;
+    color:var(--ink-soft);
+  }
+  .chart-wrap{ position:relative; height:230px; }
+
+  .alert-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:9px 0;
+    border-bottom:1px dashed var(--line);
+    font-size:13.5px;
+  }
+  .alert-row:last-child{ border-bottom:none; }
+  .pill{
+    font-size:11px;
+    padding:2px 9px;
+    border-radius:999px;
+    font-weight:500;
+  }
+  .pill.danger{ background:var(--danger-soft); color:var(--danger); }
+  .pill.warn{ background:var(--warn-soft); color:#8a621f; }
+  .pill.ok{ background:var(--ok-soft); color:var(--ok); }
+
+  /* toolbar / filters */
+  .toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  select, input[type=text], input[type=number], input[type=date], input[type=tel], textarea{
+    font-family:'Tajawal';
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:9px 12px;
+    font-size:13.5px;
+    color:var(--ink);
+    outline:none;
+  }
+  select:focus, input:focus, textarea:focus{ border-color:var(--green-soft); }
+  .search{ min-width:200px; flex:1; }
+  .btn{
+    all:unset;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--green-deep);
+    color:#fff;
+    padding:9px 16px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:500;
+  }
+  .btn:hover{ background:var(--green); }
+  .btn.secondary{
+    background:transparent;
+    color:var(--green-deep);
+    border:1px solid var(--green-deep);
+  }
+  .btn.danger{ background:var(--danger); }
+  .btn.ghost{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+    padding:6px 12px;
+    font-size:12.5px;
+  }
+  .spacer{ flex:1; }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+  }
+  thead th{
+    text-align:right;
+    font-weight:500;
+    color:var(--ink-soft);
+    font-size:12px;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:11px 12px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  tbody tr:hover{ background:rgba(184,134,46,0.05); }
+  tbody tr.row-danger{ background:var(--danger-soft); }
+  tbody tr.row-warn{ background:var(--warn-soft); }
+  .table-wrap{ overflow-x:auto; }
+  .num{ font-variant-numeric:tabular-nums; }
+  .foot-total td{ font-weight:700; color:var(--green-deep); border-top:2px solid var(--line); border-bottom:none; }
+
+  .icon-btn{
+    all:unset;
+    cursor:pointer;
+    color:var(--ink-soft);
+    padding:4px 6px;
+    border-radius:6px;
+  }
+  .icon-btn:hover{ background:var(--line); color:var(--ink); }
+
+  /* modal */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(35,30,20,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+    padding:20px;
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background:var(--paper);
+    border-radius:14px;
+    width:100%;
+    max-width:480px;
+    max-height:90vh;
+    overflow-y:auto;
+    padding:24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal h3{ margin:0 0 18px; color:var(--green-deep); font-size:18px;}
+  .field{ margin-bottom:13px; display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:12.5px; color:var(--ink-soft); }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .modal-actions{ display:flex; gap:10px; margin-top:18px; justify-content:flex-start; }
+
+  .empty{
+    text-align:center;
+    padding:40px 10px;
+    color:var(--ink-soft);
+    font-size:13.5px;
+  }
+
+  .toast{
+    position:fixed;
+    bottom:22px;
+    left:50%;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--green-deep);
+    color:#fff;
+    padding:11px 20px;
+    border-radius:999px;
+    font-size:13px;
+    opacity:0;
+    pointer-events:none;
+    transition:all .25s ease;
+    z-index:99;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .badge-resto{
+    font-size:11px;
+    padding:2px 9px;
+    border-radius:999px;
+    background:var(--ok-soft);
+    color:var(--ok);
+    font-weight:500;
+  }
+  .badge-resto.majlah{ background:#EDE3F5; color:#6b3fa0; }
+
+  @media (max-width: 760px){
+    .app{ flex-direction:column; }
+    .sidebar{ width:100%; border-left:none; border-bottom:1px solid var(--line); flex-direction:row; align-items:center; overflow-x:auto; padding:14px 16px;}
+    nav.tabs{ flex-direction:row; }
+    .sidebar-footer{ display:none; }
+    .brand{ display:none; }
+    .main{ padding:18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">دار مدة</div>
+      <div class="sub">لوحة المتابعة التشغيلية</div>
+    </div>
+    <nav class="tabs" id="navTabs">
+      <button data-tab="overview" class="active">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        نظرة عامة
+      </button>
+      <button data-tab="orders">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 L6 22 L18 22 L18 2 Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+        الطلبات
+      </button>
+      <button data-tab="inventory">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4Z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>
+        المخزون
+      </button>
+      <button data-tab="expenses">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1.5 3-1.5 3 0s-3 1-3 2.5 3 1 3 2.5"/></svg>
+        المصروفات
+      </button>
+      <button data-tab="staff">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-4 3-6.5 6.5-6.5S15.5 16 15.5 20"/><circle cx="18" cy="8.5" r="2.4"/><path d="M15 13.4c2.6.2 5 2.3 5 6.6"/></svg>
+        الموظفين والرواتب
+      </button>
+      <button data-tab="menu">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v4H4zM4 10h10v4H4zM4 16h16v4H4z"/></svg>
+        قائمة الأصناف
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      البيانات محفوظة على جهازك تلقائيًا.<br>
+      دار مدة · ماجلة
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="topbar">
+      <div class="title" id="pageTitle">نظرة عامة
+        <span class="muted" id="pageSub">ملخص الأداء لجميع المطاعم</span>
+      </div>
+      <div class="seg" id="restoFilter">
+        <button data-r="all" class="active">الكل</button>
+        <button data-r="دار مدة">دار مدة</button>
+        <button data-r="ماجلة">ماجلة</button>
+      </div>
+    </div>
+
+    <!-- ===================== OVERVIEW ===================== -->
+    <section class="tab active" id="tab-overview">
+      <div class="kpis" id="ovKpis"></div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>المبيعات حسب اليوم <span class="tag" id="ovSalesRange"></span></h3>
+          <div class="chart-wrap"><canvas id="chartSalesByDay"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>الطلبات حسب المطعم</h3>
+          <div class="chart-wrap"><canvas id="chartOrdersByResto"></canvas></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>أحدث الطلبات</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>التاريخ</th><th>العميل</th><th>المطعم</th><th>القيمة</th><th>الحالة</th></tr></thead>
+              <tbody id="ovRecentOrders"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>تنبيهات المخزون <span class="tag" id="ovLowStockCount"></span></h3>
+          <div id="ovLowStock"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== ORDERS ===================== -->
+    <section class="tab" id="tab-orders">
+      <div class="toolbar">
+        <select id="ordStatusFilter">
+          <option value="all">كل الحالات</option>
+          <option value="قيد التجهيز">قيد التجهيز</option>
+          <option value="تم التجهيز">تم التجهيز</option>
+          <option value="تم التسليم">تم التسليم</option>
+          <option value="ملغي">ملغي</option>
+        </select>
+        <select id="ordSourceFilter">
+          <option value="all">كل المصادر</option>
+          <option value="WhatsApp">WhatsApp</option>
+          <option value="Instagram">Instagram</option>
+          <option value="الموقع الإلكتروني">الموقع الإلكتروني</option>
+          <option value="تطبيق توصيل">تطبيق توصيل</option>
+          <option value="أخرى">أخرى</option>
+        </select>
+        <input type="text" class="search" id="ordSearch" placeholder="بحث باسم العميل أو رقم الطلب...">
+        <div class="spacer"></div>
+        <button class="btn" id="btnAddOrder">+ طلب جديد</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>رقم الطلب</th><th>التاريخ</th><th>الوقت</th><th>المطعم</th><th>العميل</th>
+              <th>المصدر</th><th>الحالة</th><th>القيمة</th><th>الدفع</th><th></th>
+            </tr></thead>
+            <tbody id="ordersBody"></tbody>
+            <tfoot><tr class="foot-total"><td colspan="7">الإجمالي</td><td id="ordersTotal">0</td><td colspan="2"></td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== INVENTORY ===================== -->
+    <section class="tab" id="tab-inventory">
+      <div class="toolbar">
+        <input type="text" class="search" id="invSearch" placeholder="بحث عن مادة...">
+        <div class="spacer"></div>
+        <button class="btn" id="btnAddInv">+ مادة جديدة</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>المادة</th><th>الوحدة</th><th>الكمية الحالية</th><th>حد إعادة الطلب</th>
+              <th>تكلفة الوحدة</th><th>قيمة المخزون</th><th>الحالة</th><th></th>
+            </tr></thead>
+            <tbody id="invBody"></tbody>
+            <tfoot><tr class="foot-total"><td colspan="5">إجمالي قيمة المخزون</td><td id="invTotal">0</td><td colspan="2"></td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== EXPENSES ===================== -->
+    <section class="tab" id="tab-expenses">
+      <div class="toolbar">
+        <select id="expTypeFilter"><option value="all">كل الأنواع</option></select>
+        <input type="text" class="search" id="expSearch" placeholder="بحث في البيان...">
+        <div class="spacer"></div>
+        <button class="btn" id="btnAddExp">+ مصروف جديد</button>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>التاريخ</th><th>المطعم</th><th>النوع</th><th>البيان</th><th>المبلغ</th><th>الدفع</th><th></th></tr></thead>
+              <tbody id="expBody"></tbody>
+              <tfoot><tr class="foot-total"><td colspan="4">الإجمالي</td><td id="expTotal">0</td><td colspan="2"></td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h3>المصروفات حسب النوع</h3>
+          <div class="chart-wrap"><canvas id="chartExpByType"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== STAFF ===================== -->
+    <section class="tab" id="tab-staff">
+      <div class="toolbar">
+        <div class="spacer"></div>
+        <button class="btn" id="btnAddStaff">+ موظف جديد</button>
+      </div>
+      <div class="kpis" id="staffKpis"></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>الاسم</th><th>الوظيفة</th><th>المطعم</th><th>الراتب الشهري</th>
+              <th>حالة الدفع (هذا الشهر)</th><th>ملاحظات</th><th></th>
+            </tr></thead>
+            <tbody id="staffBody"></tbody>
+            <tfoot><tr class="foot-total"><td colspan="3">إجمالي الرواتب الشهرية</td><td id="staffTotal">0</td><td colspan="3"></td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MENU ===================== -->
+    <section class="tab" id="tab-menu">
+      <div class="toolbar">
+        <select id="menuDeptFilter"><option value="all">كل الأقسام</option></select>
+        <input type="text" class="search" id="menuSearch" placeholder="بحث عن صنف...">
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>القسم</th><th>الصنف</th><th>المطعم</th><th>سعر البيع</th><th>التكلفة</th><th>الهامش</th><th>نسبة الهامش</th><th>الحالة</th></tr></thead>
+            <tbody id="menuBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== Generic modal ===== -->
+<div class="overlay" id="modalOverlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script id="seedData" type="application/json">{"orders":[{"id":2000,"date":"2026-09-01","time":"08:00AM","restaurant":"ماجلة","customer_id":1,"customer":"سليمان محمد","source":"WhatsApp","status":"تم التجهيز","value":495,"payment":"كاش","notes":null},{"id":2001,"date":"2026-09-01","time":"08:00AM","restaurant":"ماجلة","customer_id":2,"customer":"أمل عبدالله","source":"WhatsApp","status":"تم التجهيز","value":495,"payment":"كاش","notes":null},{"id":2002,"date":"2026-09-02","time":"08:00AM","restaurant":"ماجلة","customer_id":3,"customer":"رنا يوسف","source":"WhatsApp","status":"تم التجهيز","value":495,"payment":"كاش","notes":null},{"id":2003,"date":"2026-09-02","time":"08:00AM","restaurant":"ماجلة","customer_id":4,"customer":"عبدالله عبدالعزيز","source":"WhatsApp","status":"تم التجهيز","value":495,"payment":"كاش","notes":null},{"id":2004,"date":"2026-09-03","time":"08:00AM","restaurant":"ماجلة","customer_id":5,"customer":"انس عبدالله","source":"WhatsApp","status":"تم التجهيز","value":695,"payment":"كاش","notes":null},{"id":2005,"date":"2026-09-03","time":"08:00AM","restaurant":"ماجلة","customer_id":6,"customer":"مشاري سلمان","source":"WhatsApp","status":"تم التجهيز","value":695,"payment":"كاش","notes":null},{"id":2006,"date":"2026-09-03","time":"08:00AM","restaurant":"ماجلة","customer_id":7,"customer":"رحاب عبدالله","source":"WhatsApp","status":"تم التجهيز","value":695,"payment":"كاش","notes":null},{"id":2007,"date":"2026-09-03","time":"08:00AM","restaurant":"ماجلة","customer_id":8,"customer":"حسام ","source":"WhatsApp","status":"تم التجهيز","value":1390,"payment":"كاش","notes":null},{"id":2008,"date":"2026-09-04","time":"08:00AM","restaurant":"دار مدة","customer_id":9,"customer":"عبدالعزيز العنزي","source":"WhatsApp","status":"تم التجهيز","value":100,"payment":"كاش","notes":null},{"id":2009,"date":"2026-09-05","time":"08:00AM","restaurant":"دار مدة","customer_id":10,"customer":"سمية محمد","source":"WhatsApp","status":"تم التجهيز","value":695,"payment":"كاش","notes":null},{"id":2010,"date":"2026-09-05","time":"08:00AM","restaurant":"دار مدة","customer_id":11,"customer":"إياد الصويان","source":"WhatsApp","status":"تم التجهيز","value":990,"payment":"كاش","notes":null},{"id":2011,"date":"2026-09-05","time":"08:00AM","restaurant":"دار مدة","customer_id":12,"customer":"عبدالعزيز الشلهوب","source":"WhatsApp","status":"تم التجهيز","value":495,"payment":"كاش","notes":null},{"id":2012,"date":"2026-09-05","time":"08:00AM","restaurant":"دار مدة","customer_id":13,"customer":"عمر العمران","source":"WhatsApp","status":"تم التجهيز","value":2019,"payment":"كاش","notes":null},{"id":2013,"date":"2026-09-05","time":"08:00AM","restaurant":"دار مدة","customer_id":14,"customer":"فهد القباني","source":"WhatsApp","status":"تم التجهيز","value":495,"payment":"كاش","notes":null},{"id":2014,"date":"2026-09-05","time":"08:00AM","restaurant":"دار مدة","customer_id":15,"customer":"فيصل الدوسري","source":"WhatsApp","status":"تم التجهيز","value":2180,"payment":"كاش","notes":null},{"id":2015,"date":"2026-09-05","time":"08:00AM","restaurant":"دار مدة","customer_id":16,"customer":"وعد عبدالعزيز","source":"WhatsApp","status":"تم التجهيز","value":495,"payment":"كاش","notes":null},{"id":2016,"date":"2026-09-05","time":"08:00AM","restaurant":"دار مدة","customer_id":17,"customer":"عبدالاله يحيى","source":"WhatsApp","status":"تم التجهيز","value":495,"payment":"كاش","notes":null}],"customers":[{"id":1,"name":"سليمان محمد","phone":"0533322264","area":"الصحافة","fav_restaurant":"ماجلة","orders_count":1,"total_spent":495},{"id":2,"name":"أمل عبدالله","phone":"0550940198","area":"الرائد","fav_restaurant":"ماجلة","orders_count":1,"total_spent":495},{"id":3,"name":"رنا يوسف","phone":"0566535530","area":"الياسمين","fav_restaurant":"ماجلة","orders_count":1,"total_spent":495},{"id":4,"name":"عبدالله عبدالعزيز","phone":"0566611463","area":"الملقا","fav_restaurant":"ماجلة","orders_count":1,"total_spent":495},{"id":5,"name":"انس عبدالله","phone":"0556697101","area":"شبرأ","fav_restaurant":"ماجلة","orders_count":1,"total_spent":695},{"id":6,"name":"مشاري سلمان","phone":"0504414554","area":"القيروان","fav_restaurant":"ماجلة","orders_count":1,"total_spent":695},{"id":7,"name":"رحاب عبدالله","phone":"0506661397","area":"عرقة","fav_restaurant":"ماجلة","orders_count":1,"total_spent":695},{"id":8,"name":"حسام ","phone":"0558822092","area":"العارض","fav_restaurant":"ماجلة","orders_count":1,"total_spent":1390},{"id":9,"name":"عبدالعزيز العنزي","phone":"0582888481","area":"الرمال","fav_restaurant":"دار مدة","orders_count":1,"total_spent":100},{"id":10,"name":"سمية محمد","phone":"0532810422","area":"الشفا","fav_restaurant":"دار مدة","orders_count":1,"total_spent":695},{"id":11,"name":"إياد الصويان","phone":"0555519511","area":"النرجس","fav_restaurant":"دار مدة","orders_count":1,"total_spent":990},{"id":12,"name":"عبدالعزيز الشلهوب","phone":"0503311116","area":"الملقا","fav_restaurant":"دار مدة","orders_count":1,"total_spent":495},{"id":13,"name":"عمر العمران","phone":"0504555483","area":"إستلام من المحل","fav_restaurant":"دار مدة","orders_count":1,"total_spent":2019},{"id":14,"name":"فهد القباني","phone":"0503671178","area":"المؤنسية","fav_restaurant":"دار مدة","orders_count":1,"total_spent":495},{"id":15,"name":"فيصل الدوسري","phone":"0506222299","area":"عرقة","fav_restaurant":"دار مدة","orders_count":1,"total_spent":2180},{"id":16,"name":"وعد عبدالعزيز","phone":"0500782558","area":"المهدية","fav_restaurant":"دار مدة","orders_count":1,"total_spent":495},{"id":17,"name":"عبدالاله يحيى","phone":"0555468243","area":"المروج","fav_restaurant":"دار مدة","orders_count":1,"total_spent":495},{"id":18,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":19,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":20,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":21,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":22,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":23,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":24,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":25,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":26,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":27,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":28,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":29,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":30,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":31,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":32,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":33,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":34,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":35,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":36,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":37,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":38,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":39,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":40,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":41,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":42,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":43,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":44,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":45,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":46,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":47,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":48,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":49,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":50,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":51,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":52,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":53,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":54,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":55,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null},{"id":56,"name":null,"phone":null,"area":null,"fav_restaurant":null,"orders_count":null,"total_spent":null}],"items":[{"id":1110,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة الدار كبير","price":695,"cost":270,"margin":425,"status":"نشط"},{"id":1111,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة الدار وسط","price":495,"cost":183,"margin":312,"status":"نشط"},{"id":1112,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة الدار صغير","price":295,"cost":100,"margin":195,"status":"نشط"},{"id":1113,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة الدار كبير مع إضافة 20 حبة روبيان","price":765,"cost":292,"margin":473,"status":"نشط"},{"id":1114,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة الدار كبير مع إضافة 40 حبة روبيان","price":795,"cost":313,"margin":482,"status":"نشط"},{"id":1115,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة الدار وسط مع إضافة 20 حبة روبيان","price":565,"cost":205,"margin":360,"status":"نشط"},{"id":1116,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة الدار وسط مع إضافة 40 حبة روبيان","price":595,"cost":226,"margin":369,"status":"نشط"},{"id":1117,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة الدار صغير مع إضافة 20 حبة روبيان","price":365,"cost":122,"margin":243,"status":"نشط"},{"id":1118,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة الدار صغير مع إضافة 40 حبة روبيان","price":395,"cost":143,"margin":252,"status":"نشط"},{"id":1119,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة مجبوس كبير","price":695,"cost":270,"margin":425,"status":"نشط"},{"id":1120,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة مجبوس وسط","price":495,"cost":183,"margin":312,"status":"نشط"},{"id":1121,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة مجبوس صغير","price":295,"cost":100,"margin":195,"status":"نشط"},{"id":1122,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة مجبوس كبير مع إضافة 20 حبة روبيان","price":765,"cost":292,"margin":473,"status":"نشط"},{"id":1123,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة مجبوس كبير مع إضافة 40 حبة روبيان","price":795,"cost":313,"margin":482,"status":"نشط"},{"id":1124,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة مجبوس وسط مع إضافة 20 حبة روبيان","price":565,"cost":205,"margin":360,"status":"نشط"},{"id":1125,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة مجبوس وسط مع إضافة 40 حبة روبيان","price":595,"cost":226,"margin":369,"status":"نشط"},{"id":1126,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة مجبوس صغير مع إضافة 20 حبة روبيان","price":365,"cost":122,"margin":243,"status":"نشط"},{"id":1127,"restaurant":"دار مدة","dept":"اللحوم","name":"خبيزة مجبوس صغير مع إضافة 40 حبة روبيان","price":395,"cost":143,"margin":252,"status":"نشط"},{"id":1128,"restaurant":"دار مدة","dept":"اللحوم","name":"مشوي الجدر كبير","price":695,"cost":270,"margin":425,"status":"نشط"},{"id":1129,"restaurant":"دار مدة","dept":"اللحوم","name":"مشوي الجدر وسط","price":495,"cost":183,"margin":312,"status":"نشط"},{"id":1130,"restaurant":"دار مدة","dept":"اللحوم","name":"مشوي الجدر صغير","price":295,"cost":100,"margin":195,"status":"نشط"},{"id":1131,"restaurant":"دار مدة","dept":"اللحوم","name":"مشوي الجدر كبير مع إضافة 20 حبة روبيان","price":765,"cost":292,"margin":473,"status":"نشط"},{"id":1132,"restaurant":"دار مدة","dept":"اللحوم","name":"مشوي الجدر كبير مع إضافة 40 حبة روبيان","price":795,"cost":313,"margin":482,"status":"نشط"},{"id":1133,"restaurant":"دار مدة","dept":"اللحوم","name":"مشوي الجدر وسط مع إضافة 20 حبة روبيان","price":565,"cost":205,"margin":360,"status":"نشط"},{"id":1134,"restaurant":"دار مدة","dept":"اللحوم","name":"مشوي الجدر وسط مع إضافة 40 حبة روبيان","price":595,"cost":226,"margin":369,"status":"نشط"},{"id":1135,"restaurant":"دار مدة","dept":"اللحوم","name":"مشوي الجدر صغير مع إضافة 20 حبة روبيان","price":365,"cost":122,"margin":243,"status":"نشط"},{"id":1136,"restaurant":"دار مدة","dept":"اللحوم","name":"مشوي الجدر صغير مع إضافة 40 حبة روبيان","price":395,"cost":143,"margin":252,"status":"نشط"},{"id":1137,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق هامور ملكي كبير","price":695,"cost":294,"margin":401,"status":"نشط"},{"id":1138,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق هامور ملكي وسط","price":495,"cost":175,"margin":320,"status":"نشط"},{"id":1139,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق هامور ملكي صغير","price":295,"cost":null,"margin":295,"status":"نشط"},{"id":1140,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق هامور ملكي كبير مع إضافة 20 حبة روبيان","price":765,"cost":316,"margin":449,"status":"نشط"},{"id":1141,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق هامور ملكي كبير مع إضافة 40 حبة روبيان","price":795,"cost":337,"margin":458,"status":"نشط"},{"id":1142,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق هامور ملكي وسط مع إضافة 20 حبة روبيان","price":565,"cost":197,"margin":368,"status":"نشط"},{"id":1143,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق هامور ملكي وسط مع إضافة 40 حبة روبيان","price":595,"cost":218,"margin":377,"status":"نشط"},{"id":1144,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق هامور ملكي صغير مع إضافة 20 حبة روبيان","price":365,"cost":null,"margin":365,"status":"نشط"},{"id":1145,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق هامور ملكي صغير مع إضافة 40 حبة روبيان","price":395,"cost":null,"margin":395,"status":"نشط"},{"id":1146,"restaurant":"دار مدة","dept":"الاسماك","name":"طبق النوخذة كبير","price":695,"cost":296,"margin":399,"status":"نشط"},{"id":1147,"restaurant":"دار مدة","dept":"الاسماك","name":"طبق النوخذة وسط","price":495,"cost":192,"margin":303,"status":"نشط"},{"id":1148,"restaurant":"دار مدة","dept":"الاسماك","name":"طبق النوخذة صغير","price":295,"cost":null,"margin":295,"status":"نشط"},{"id":1149,"restaurant":"دار مدة","dept":"الاسماك","name":"طبق النوخذة كبير مع إضافة 20 حبة روبيان","price":765,"cost":318,"margin":447,"status":"نشط"},{"id":1150,"restaurant":"دار مدة","dept":"الاسماك","name":"طبق النوخذة كبير مع إضافة 40 حبة روبيان","price":795,"cost":339,"margin":456,"status":"نشط"},{"id":1151,"restaurant":"دار مدة","dept":"الاسماك","name":"طبق النوخذة وسط مع إضافة 20 حبة روبيان","price":565,"cost":214,"margin":351,"status":"نشط"},{"id":1152,"restaurant":"دار مدة","dept":"الاسماك","name":"طبق النوخذة وسط مع إضافة 40 حبة روبيان","price":595,"cost":235,"margin":360,"status":"نشط"},{"id":1153,"restaurant":"دار مدة","dept":"الاسماك","name":"طبق النوخذة صغير مع إضافة 20 حبة روبيان","price":365,"cost":null,"margin":365,"status":"نشط"},{"id":1154,"restaurant":"دار مدة","dept":"الاسماك","name":"طبق النوخذة صغير مع إضافة 40 حبة روبيان","price":395,"cost":null,"margin":395,"status":"نشط"},{"id":1155,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق كنعد ملكي كبير","price":695,"cost":232,"margin":463,"status":"نشط"},{"id":1156,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق كنعد ملكي وسط","price":495,"cost":177,"margin":318,"status":"نشط"},{"id":1157,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق كنعد ملكي صغير","price":295,"cost":109,"margin":186,"status":"نشط"},{"id":1158,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق كنعد ملكي كبير مع إضافة روبيان 20 حبة","price":765,"cost":254,"margin":511,"status":"نشط"},{"id":1159,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق كنعد ملكي كبير مع إضافة روبيان 40 حبة","price":795,"cost":275,"margin":520,"status":"نشط"},{"id":1160,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق كنعد ملكي وسط مع إضافة روبيان 20 حبة","price":565,"cost":199,"margin":366,"status":"نشط"},{"id":1161,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق كنعد ملكي وسط مع إضافة روبيان 40 حبة","price":595,"cost":220,"margin":375,"status":"نشط"},{"id":1162,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق كنعد ملكي صغير مع إضافة روبيان 20 حبة","price":365,"cost":131,"margin":234,"status":"نشط"},{"id":1163,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق كنعد ملكي صغير مع إضافة روبيان 40 حبة","price":395,"cost":152,"margin":243,"status":"نشط"},{"id":1164,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق سيباس ملكي كبير","price":695,"cost":242,"margin":453,"status":"نشط"},{"id":1165,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق سيباس ملكي وسط","price":495,"cost":184,"margin":311,"status":"نشط"},{"id":1166,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق سيباس ملكي صغير","price":295,"cost":114,"margin":181,"status":"نشط"},{"id":1167,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق سيباس ملكي كبير مع إضافة روبيان 20 حبة ","price":765,"cost":264,"margin":501,"status":"نشط"},{"id":1168,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق سيباس ملكي كبير مع إضافة روبيان 40 حبة ","price":795,"cost":285,"margin":510,"status":"نشط"},{"id":1169,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق سيباس ملكي وسط مع إضافة روبيان 20 حبة","price":565,"cost":206,"margin":359,"status":"نشط"},{"id":1170,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق سيباس ملكي وسط مع إضافة روبيان 40 حبة","price":595,"cost":227,"margin":368,"status":"نشط"},{"id":1171,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق سيباس ملكي صغير مع إضافة روبيان 20 حبة","price":365,"cost":136,"margin":229,"status":"نشط"},{"id":1172,"restaurant":"دار مدة","dept":"الاسماك","name":"مطبق سيباس ملكي صغير مع إضافة روبيان 40 حبة","price":395,"cost":157,"margin":238,"status":"نشط"},{"id":1173,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين الدار كبير","price":695,"cost":188,"margin":507,"status":"نشط"},{"id":1174,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين الدار وسط","price":495,"cost":122,"margin":373,"status":"نشط"},{"id":1175,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين الدار صغير","price":295,"cost":87,"margin":208,"status":"نشط"},{"id":1176,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين الدار كبير مع إضافة 20 حبة روبيان","price":765,"cost":210,"margin":555,"status":"نشط"},{"id":1177,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين الدار كبير مع إضافة 40 حبة روبيان","price":795,"cost":231,"margin":564,"status":"نشط"},{"id":1178,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين الدار وسط مع إضافة 20 حبة روبيان","price":565,"cost":144,"margin":421,"status":"نشط"},{"id":1179,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين الدار وسط مع إضافة 40 حبة روبيان","price":595,"cost":165,"margin":430,"status":"نشط"},{"id":1180,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين الدار صغير مع إضافة 20 حبة روبيان","price":365,"cost":109,"margin":256,"status":"نشط"},{"id":1181,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين الدار صغير مع إضافة 40 حبة روبيان","price":395,"cost":130,"margin":265,"status":"نشط"},{"id":1182,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين سبشل كبير","price":695,"cost":188,"margin":507,"status":"نشط"},{"id":1183,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين سبشل وسط","price":495,"cost":122,"margin":373,"status":"نشط"},{"id":1184,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين سبشل صغير","price":295,"cost":87,"margin":208,"status":"نشط"},{"id":1185,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين سبشل كبير مع إضافة 20 حبة روبيان","price":765,"cost":210,"margin":555,"status":"نشط"},{"id":1186,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين سبشل كبير مع إضافة 40 حبة روبيان","price":795,"cost":231,"margin":564,"status":"نشط"},{"id":1187,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين سبشل وسط مع إضافة 20 حبة روبيان","price":565,"cost":144,"margin":421,"status":"نشط"},{"id":1188,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين سبشل وسط مع إضافة 40 حبة روبيان","price":595,"cost":165,"margin":430,"status":"نشط"},{"id":1189,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين سبشل صغير مع إضافة 20 حبة روبيان","price":365,"cost":109,"margin":256,"status":"نشط"},{"id":1190,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين سبشل صغير مع إضافة 40 حبة روبيان","price":395,"cost":130,"margin":265,"status":"نشط"},{"id":1191,"restaurant":"دار مدة","dept":"الروبيان","name":"مثومة ربيان كبير","price":695,"cost":188,"margin":507,"status":"نشط"},{"id":1192,"restaurant":"دار مدة","dept":"الروبيان","name":"مثومة ربيان وسط","price":495,"cost":122,"margin":373,"status":"نشط"},{"id":1193,"restaurant":"دار مدة","dept":"الروبيان","name":"مثومة ربيان صغير","price":295,"cost":87,"margin":208,"status":"نشط"},{"id":1194,"restaurant":"دار مدة","dept":"الروبيان","name":"مثومة ربيان كبير مع إضافة 20 حبة روبيان","price":765,"cost":210,"margin":555,"status":"نشط"},{"id":1195,"restaurant":"دار مدة","dept":"الروبيان","name":"مثومة ربيان كبير مع إضافة 40 حبة روبيان","price":795,"cost":231,"margin":564,"status":"نشط"},{"id":1196,"restaurant":"دار مدة","dept":"الروبيان","name":"مثومة ربيان وسط مع إضافة 20 حبة روبيان","price":565,"cost":144,"margin":421,"status":"نشط"},{"id":1197,"restaurant":"دار مدة","dept":"الروبيان","name":"مثومة ربيان وسط مع إضافة 40 حبة روبيان","price":595,"cost":165,"margin":430,"status":"نشط"},{"id":1198,"restaurant":"دار مدة","dept":"الروبيان","name":"مثومة ربيان صغير مع إضافة 20 حبة روبيان","price":365,"cost":109,"margin":256,"status":"نشط"},{"id":1199,"restaurant":"دار مدة","dept":"الروبيان","name":"مثومة ربيان صغير مع إضافة 40 حبة روبيان","price":395,"cost":130,"margin":265,"status":"نشط"},{"id":1200,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين مكس كبير","price":695,"cost":188,"margin":507,"status":"نشط"},{"id":1201,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين مكس وسط","price":495,"cost":122,"margin":373,"status":"نشط"},{"id":1202,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين مكس صغير","price":295,"cost":87,"margin":208,"status":"نشط"},{"id":1203,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين مكس كبير مع إضافة 20 حبة روبيان","price":765,"cost":210,"margin":555,"status":"نشط"},{"id":1204,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين مكس كبير مع إضافة 40 حبة روبيان","price":795,"cost":231,"margin":564,"status":"نشط"},{"id":1205,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين مكس وسط مع إضافة 20 حبة روبيان","price":565,"cost":144,"margin":421,"status":"نشط"},{"id":1206,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين مكس وسط مع إضافة 40 حبة روبيان","price":595,"cost":165,"margin":430,"status":"نشط"},{"id":1207,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين مكس صغير مع إضافة 20 حبة روبيان","price":365,"cost":109,"margin":256,"status":"نشط"},{"id":1208,"restaurant":"دار مدة","dept":"الروبيان","name":"مربين مكس صغير مع إضافة 40 حبة روبيان","price":395,"cost":130,"margin":265,"status":"نشط"},{"id":1209,"restaurant":"دار مدة","dept":"أطباق جانبية","name":"مضروبة الدار كبير","price":180,"cost":null,"margin":180,"status":"نشط"},{"id":1210,"restaurant":"دار مدة","dept":"أطباق جانبية","name":"مضروبة الدار وسط","price":100,"cost":null,"margin":100,"status":"نشط"},{"id":1211,"restaurant":"دار مدة","dept":"أطباق جانبية","name":"مضروبة الدار صغير","price":50,"cost":null,"margin":50,"status":"نشط"},{"id":1212,"restaurant":"دار مدة","dept":"أطباق جانبية","name":"جريش أحمر كبير","price":180,"cost":null,"margin":180,"status":"نشط"},{"id":1213,"restaurant":"دار مدة","dept":"أطباق جانبية","name":"جريش أحمر وسط","price":100,"cost":null,"margin":100,"status":"نشط"},{"id":1214,"restaurant":"دار مدة","dept":"أطباق جانبية","name":"جريش احمر صغير","price":50,"cost":null,"margin":50,"status":"نشط"},{"id":1215,"restaurant":"دار مدة","dept":"أطباق جانبية","name":"جريش أبيض كبير","price":180,"cost":null,"margin":180,"status":"نشط"},{"id":1216,"restaurant":"دار مدة","dept":"أطباق جانبية","name":"جريش أبيض وسط","price":100,"cost":null,"margin":100,"status":"نشط"},{"id":1217,"restaurant":"دار مدة","dept":"أطباق جانبية","name":"جريش أبيض صغير","price":50,"cost":null,"margin":50,"status":"نشط"},{"id":1218,"restaurant":"دار مدة","dept":"السلطات والاضافات","name":"روب مدة","price":8,"cost":null,"margin":8,"status":"نشط"},{"id":1219,"restaurant":"دار مدة","dept":"السلطات والاضافات","name":"دقوس كويتي","price":8,"cost":null,"margin":8,"status":"نشط"},{"id":1220,"restaurant":"دار مدة","dept":"السلطات والاضافات","name":"دقوس صبار","price":8,"cost":null,"margin":8,"status":"نشط"},{"id":1221,"restaurant":"دار مدة","dept":"السلطات والاضافات","name":"معبوج أحمر","price":4,"cost":null,"margin":4,"status":"نشط"},{"id":1222,"restaurant":"دار مدة","dept":"السلطات والاضافات","name":"معبوج أخضر","price":4,"cost":null,"margin":4,"status":"نشط"},{"id":1223,"restaurant":"دار مدة","dept":"السلطات والاضافات","name":"معبوج باذنجان","price":4,"cost":null,"margin":4,"status":"نشط"},{"id":1224,"restaurant":"ماجلة","dept":"اللحوم","name":"قرصية مصلي كبير","price":695,"cost":270,"margin":425,"status":"نشط"},{"id":1225,"restaurant":"ماجلة","dept":"اللحوم","name":"قرصية مصلي وسط","price":495,"cost":183,"margin":312,"status":"نشط"},{"id":1226,"restaurant":"ماجلة","dept":"اللحوم","name":"قرصية مصلي صغير","price":295,"cost":100,"margin":195,"status":"نشط"},{"id":1227,"restaurant":"ماجلة","dept":"اللحوم","name":"مبخر كبير","price":695,"cost":270,"margin":425,"status":"نشط"},{"id":1228,"restaurant":"ماجلة","dept":"اللحوم","name":"مبخر وسط","price":495,"cost":183,"margin":312,"status":"نشط"},{"id":1229,"restaurant":"ماجلة","dept":"اللحوم","name":"مبخر صغير","price":295,"cost":100,"margin":195,"status":"نشط"},{"id":1230,"restaurant":"ماجلة","dept":"اللحوم","name":"مجبوس كبير","price":695,"cost":270,"margin":425,"status":"نشط"},{"id":1231,"restaurant":"ماجلة","dept":"اللحوم","name":"مجبوس وسط","price":495,"cost":183,"margin":312,"status":"نشط"},{"id":1232,"restaurant":"ماجلة","dept":"اللحوم","name":"مجبوس صغير","price":295,"cost":100,"margin":195,"status":"نشط"},{"id":1233,"restaurant":"ماجلة","dept":"اللحوم","name":"حدر عيش كبير","price":695,"cost":270,"margin":425,"status":"نشط"},{"id":1234,"restaurant":"ماجلة","dept":"اللحوم","name":"حدر عيش وسط","price":495,"cost":183,"margin":312,"status":"نشط"},{"id":1235,"restaurant":"ماجلة","dept":"اللحوم","name":"حدر عيش صغير","price":295,"cost":100,"margin":195,"status":"نشط"},{"id":1236,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق البحرين كبير","price":695,"cost":null,"margin":695,"status":"نشط"},{"id":1237,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق البحرين وسط","price":495,"cost":null,"margin":495,"status":"نشط"},{"id":1238,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق البحرين صغير","price":295,"cost":null,"margin":295,"status":"نشط"},{"id":1239,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق الجمعة كبير","price":695,"cost":null,"margin":695,"status":"نشط"},{"id":1240,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق الجمعة وسط","price":495,"cost":null,"margin":495,"status":"نشط"},{"id":1241,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق الجمعة صغير","price":295,"cost":null,"margin":295,"status":"نشط"},{"id":1242,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق الطواش كبير","price":695,"cost":null,"margin":695,"status":"نشط"},{"id":1243,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق الطواش وسط","price":495,"cost":null,"margin":495,"status":"نشط"},{"id":1244,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق الطواش صغير","price":295,"cost":null,"margin":295,"status":"نشط"},{"id":1245,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق الملوك كبير","price":695,"cost":null,"margin":695,"status":"نشط"},{"id":1246,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق الملوك وسط","price":495,"cost":null,"margin":495,"status":"نشط"},{"id":1247,"restaurant":"ماجلة","dept":"الاسماك","name":"طبق الملوك صغير","price":295,"cost":null,"margin":295,"status":"نشط"},{"id":1248,"restaurant":"ماجلة","dept":"السلطات والاضافات","name":"روب بالخيار كبير","price":10,"cost":null,"margin":10,"status":"نشط"},{"id":1249,"restaurant":"ماجلة","dept":"السلطات والاضافات","name":"روب بالخيار صغير","price":4,"cost":null,"margin":4,"status":"نشط"},{"id":1250,"restaurant":"ماجلة","dept":"السلطات والاضافات","name":"اجار كبير","price":10,"cost":null,"margin":10,"status":"نشط"},{"id":1251,"restaurant":"ماجلة","dept":"السلطات والاضافات","name":"اجار صغير","price":4,"cost":null,"margin":4,"status":"نشط"},{"id":1252,"restaurant":"ماجلة","dept":"السلطات والاضافات","name":"معبوج كبير","price":10,"cost":null,"margin":10,"status":"نشط"},{"id":1253,"restaurant":"ماجلة","dept":"السلطات والاضافات","name":"معبوج صغير","price":4,"cost":null,"margin":4,"status":"نشط"},{"id":1254,"restaurant":"ماجلة","dept":"السلطات والاضافات","name":"طحينة كبير","price":10,"cost":null,"margin":10,"status":"نشط"},{"id":1255,"restaurant":"ماجلة","dept":"السلطات والاضافات","name":"طحينة صغير","price":4,"cost":null,"margin":4,"status":"نشط"},{"id":1256,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1257,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1258,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1259,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1260,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1261,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1262,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1263,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1264,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1265,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1266,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null},{"id":1267,"restaurant":"ماجلة","dept":null,"name":null,"price":null,"cost":null,"margin":0,"status":null}],"order_details":[{"id":"DM001","order_id":2000,"item_id":1225,"item_name":"قرصية مصلي وسط","qty":1,"unit_price":495,"total":495},{"id":"DM002","order_id":2001,"item_id":1225,"item_name":"قرصية مصلي وسط","qty":1,"unit_price":495,"total":495},{"id":"DM003","order_id":2002,"item_id":1228,"item_name":"مبخر وسط","qty":1,"unit_price":495,"total":495}],"restaurants":[{"id":"R001","name":"دار مدة","status":"نشط"},{"id":"R002","name":"ماجلة","status":"نشط"}]}</script>
+
+<script>
+/* ============================================================
+   DATA LAYER
+============================================================ */
+const SEED = JSON.parse(document.getElementById('seedData').textContent);
+
+const EXPENSE_TYPES = ["رواتب","إيجار","كهرباء","مياه","إنترنت واتصالات","تسويق وإعلانات","تغليف","توصيل","نظافة","صيانة","مشتريات مواد","رسوم التطبيقات","رسوم بنكية","مصروفات أخرى"];
+
+const DEFAULT_INVENTORY = [
+  {name:"لحم غنم", unit:"كجم", qty:38, threshold:20, cost:38},
+  {name:"أرز أبيض كويتي", unit:"كجم", qty:60, threshold:25, cost:7},
+  {name:"أرز أصفر", unit:"كجم", qty:22, threshold:15, cost:8},
+  {name:"روبيان", unit:"كجم", qty:14, threshold:10, cost:42},
+  {name:"سمك هامور", unit:"كجم", qty:9, threshold:12, cost:55},
+  {name:"سمك زبيدي", unit:"كجم", qty:11, threshold:10, cost:60},
+  {name:"سمك كنعد", unit:"كجم", qty:8, threshold:10, cost:65},
+  {name:"سمك سيباس", unit:"كجم", qty:13, threshold:10, cost:48},
+  {name:"حشو كويتي (مكسرات وبصل)", unit:"كجم", qty:16, threshold:8, cost:30},
+  {name:"باذنجان", unit:"كجم", qty:10, threshold:8, cost:6},
+  {name:"ورق عنب", unit:"كجم", qty:5, threshold:5, cost:20},
+  {name:"بصل", unit:"كجم", qty:30, threshold:15, cost:3},
+  {name:"ثوم", unit:"كجم", qty:6, threshold:4, cost:12},
+  {name:"ليمون أسود", unit:"كجم", qty:4, threshold:3, cost:25},
+  {name:"دبس رمان", unit:"لتر", qty:6, threshold:3, cost:18},
+  {name:"جريش", unit:"كجم", qty:12, threshold:8, cost:9},
+  {name:"زبادي/لبن", unit:"كجم", qty:9, threshold:6, cost:8},
+  {name:"طماطم", unit:"كجم", qty:14, threshold:10, cost:4},
+  {name:"فلفل أحمر وأخضر", unit:"كجم", qty:5, threshold:5, cost:10},
+  {name:"مكسرات (لوز/كاجو)", unit:"كجم", qty:7, threshold:5, cost:55},
+  {name:"خبز أبيض (لخبيزة الدار)", unit:"عدد", qty:20, threshold:15, cost:6},
+  {name:"علب وأكياس تغليف", unit:"عدد", qty:150, threshold:100, cost:1.5},
+];
+
+function uid(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function fmt(n){ return (Math.round((n||0)*100)/100).toLocaleString('en-US'); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+let STORAGE_OK = true;
+async function storeGet(key, fallback){
+  try{
+    const r = await window.storage.get(key, false);
+    if(!r) return fallback;
+    return JSON.parse(r.value);
+  }catch(e){
+    return fallback;
+  }
+}
+async function storeSet(key, value){
+  try{
+    await window.storage.set(key, JSON.stringify(value), false);
+    return true;
+  }catch(e){
+    STORAGE_OK = false;
+    return false;
+  }
+}
+
+let STATE = {
+  orders: [],
+  inventory: [],
+  expenses: [],
+  staff: [],
+  restoFilter: 'all',
+};
+
+async function loadAll(){
+  STATE.orders = await storeGet('orders_v1', SEED.orders.map(o=>({...o})));
+  STATE.inventory = await storeGet('inventory_v1', DEFAULT_INVENTORY.map(i=>({id:uid('inv_'), ...i, updated: new Date().toISOString().slice(0,10)})));
+  STATE.expenses = await storeGet('expenses_v1', []);
+  STATE.staff = await storeGet('staff_v1', []);
+}
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+const pageMeta = {
+  overview:{title:"نظرة عامة", sub:"ملخص الأداء لجميع المطاعم"},
+  orders:{title:"الطلبات", sub:"متابعة طلبات المنصة أولًا بأول"},
+  inventory:{title:"المخزون", sub:"كميات المواد وتنبيهات النقص"},
+  expenses:{title:"المصروفات", sub:"تسجيل ومتابعة المصاريف التشغيلية"},
+  staff:{title:"الموظفين والرواتب", sub:"إدارة رواتب الفريق وحالة الصرف"},
+  menu:{title:"قائمة الأصناف", sub:"مرجع الأسعار والتكلفة والهامش"},
+};
+
+document.getElementById('navTabs').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-tab]');
+  if(!btn) return;
+  document.querySelectorAll('#navTabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('section.tab').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  const meta = pageMeta[btn.dataset.tab];
+  document.getElementById('pageTitle').childNodes[0].textContent = meta.title + ' ';
+  document.getElementById('pageSub').textContent = meta.sub;
+});
+
+document.getElementById('restoFilter').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-r]');
+  if(!btn) return;
+  document.querySelectorAll('#restoFilter button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  STATE.restoFilter = btn.dataset.r;
+  renderAll();
+});
+
+function filteredOrders(){
+  if(STATE.restoFilter === 'all') return STATE.orders;
+  return STATE.orders.filter(o=>o.restaurant === STATE.restoFilter);
+}
+function filteredExpenses(){
+  if(STATE.restoFilter === 'all') return STATE.expenses;
+  return STATE.expenses.filter(e=>e.restaurant === STATE.restoFilter || e.restaurant === 'مشترك');
+}
+function filteredStaff(){
+  if(STATE.restoFilter === 'all') return STATE.staff;
+  return STATE.staff.filter(s=>s.restaurant === STATE.restoFilter);
+}
+function filteredMenu(){
+  if(STATE.restoFilter === 'all') return SEED.items;
+  return SEED.items.filter(i=>i.restaurant === STATE.restoFilter);
+}
+function filteredInventory(){ return STATE.inventory; }
+
+/* ============================================================
+   OVERVIEW
+============================================================ */
+let charts = {};
+function renderOverview(){
+  const orders = filteredOrders();
+  const totalSales = orders.reduce((s,o)=>s+(Number(o.value)||0),0);
+  const orderCount = orders.length;
+  const avgOrder = orderCount ? totalSales/orderCount : 0;
+
+  const menuByName = {};
+  SEED.items.forEach(i=>{ menuByName[i.name] = i; });
+  let estCost = 0;
+  orders.forEach(o=>{
+    const m = SEED.items.find(i=>i.restaurant===o.restaurant);
+    estCost += (o.value||0) * 0.42; // fallback avg cost ratio from menu (~42% observed)
+  });
+  const expenses = filteredExpenses().reduce((s,e)=>s+(Number(e.amount)||0),0);
+  const salaries = filteredStaff().reduce((s,st)=>s+(Number(st.salary)||0),0);
+  const netProfit = totalSales - estCost - expenses;
+
+  const lowStock = STATE.inventory.filter(i=>Number(i.qty) <= Number(i.threshold));
+
+  const kpis = [
+    {label:"إجمالي المبيعات (ريال)", value: fmt(totalSales)},
+    {label:"عدد الطلبات", value: orderCount},
+    {label:"متوسط قيمة الطلب", value: fmt(avgOrder)},
+    {label:"مصروفات مسجّلة", value: fmt(expenses)},
+    {label:"صافي ربح تقديري", value: fmt(netProfit), danger: netProfit<0},
+    {label:"مواد بحاجة لإعادة طلب", value: lowStock.length, danger: lowStock.length>0},
+  ];
+  document.getElementById('ovKpis').innerHTML = kpis.map(k=>`
+    <div class="kpi">
+      <div class="label">${k.label}</div>
+      <div class="value ${k.danger?'danger':''}">${k.value}</div>
+    </div>
+  `).join('');
+
+  // sales by day
+  const byDay = {};
+  orders.forEach(o=>{ byDay[o.date] = (byDay[o.date]||0) + (Number(o.value)||0); });
+  const days = Object.keys(byDay).sort();
+  document.getElementById('ovSalesRange').textContent = days.length ? `${days[0]} → ${days[days.length-1]}` : '';
+
+  drawChart('chartSalesByDay', 'bar', {
+    labels: days,
+    datasets:[{ label:'المبيعات', data: days.map(d=>byDay[d]), backgroundColor:'#2F4E3C', borderRadius:5, maxBarThickness:34 }]
+  }, {plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, grid:{color:'#E5DCC5'}}, x:{grid:{display:false}}}});
+
+  // orders by restaurant
+  const byResto = {};
+  orders.forEach(o=>{ byResto[o.restaurant] = (byResto[o.restaurant]||0)+1; });
+  drawChart('chartOrdersByResto', 'doughnut', {
+    labels: Object.keys(byResto),
+    datasets:[{ data: Object.values(byResto), backgroundColor:['#233D2F','#B8862E','#8a621f'], borderWidth:0 }]
+  }, {plugins:{legend:{position:'bottom', labels:{boxWidth:10, font:{family:'Tajawal'}}}}});
+
+  // recent orders
+  const recent = [...orders].sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time)).slice(0,6);
+  document.getElementById('ovRecentOrders').innerHTML = recent.map(o=>`
+    <tr>
+      <td class="num">${o.id}</td>
+      <td>${o.date}</td>
+      <td>${o.customer||'—'}</td>
+      <td>${restoBadge(o.restaurant)}</td>
+      <td class="num">${fmt(o.value)}</td>
+      <td>${statusPill(o.status)}</td>
+    </tr>
+  `).join('') || `<tr><td colspan="6" class="empty">لا توجد طلبات بعد</td></tr>`;
+
+  // low stock
+  document.getElementById('ovLowStockCount').textContent = lowStock.length ? `${lowStock.length} مادة` : '';
+  document.getElementById('ovLowStock').innerHTML = lowStock.length ? lowStock.map(i=>`
+    <div class="alert-row">
+      <span>${i.name}</span>
+      <span class="pill ${Number(i.qty)<=0 ? 'danger':'warn'}">${i.qty} ${i.unit} متبقية</span>
+    </div>
+  `).join('') : `<div class="empty">لا توجد تنبيهات — المخزون في مستوى جيد</div>`;
+}
+
+function drawChart(canvasId, type, data, options){
+  const ctx = document.getElementById(canvasId);
+  if(charts[canvasId]) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(ctx, {type, data, options: Object.assign({responsive:true, maintainAspectRatio:false}, options)});
+}
+
+function restoBadge(r){
+  const cls = r==='ماجلة' ? 'majlah' : '';
+  return `<span class="badge-resto ${cls}">${r||'—'}</span>`;
+}
+function statusPill(s){
+  let cls='ok';
+  if(s==='ملغي') cls='danger';
+  else if(s==='قيد التجهيز') cls='warn';
+  return `<span class="pill ${cls}">${s||'—'}</span>`;
+}
+
+/* ============================================================
+   ORDERS
+============================================================ */
+function renderOrders(){
+  let rows = filteredOrders();
+  const status = document.getElementById('ordStatusFilter').value;
+  const source = document.getElementById('ordSourceFilter').value;
+  const q = document.getElementById('ordSearch').value.trim().toLowerCase();
+  if(status!=='all') rows = rows.filter(o=>o.status===status);
+  if(source!=='all') rows = rows.filter(o=>o.source===source);
+  if(q) rows = rows.filter(o=> (o.customer||'').toLowerCase().includes(q) || String(o.id).includes(q));
+
+  rows = [...rows].sort((a,b)=> (b.date+b.time).localeCompare(a.date+a.time));
+
+  document.getElementById('ordersBody').innerHTML = rows.map(o=>`
+    <tr>
+      <td class="num">${o.id}</td>
+      <td>${o.date}</td>
+      <td>${o.time||'—'}</td>
+      <td>${restoBadge(o.restaurant)}</td>
+      <td>${o.customer||'—'}</td>
+      <td>${o.source||'—'}</td>
+      <td>${statusPill(o.status)}</td>
+      <td class="num">${fmt(o.value)}</td>
+      <td>${o.payment||'—'}</td>
+      <td>
+        <button class="icon-btn" onclick="editOrder('${o.id}')" title="تعديل">✎</button>
+        <button class="icon-btn" onclick="deleteOrder('${o.id}')" title="حذف">🗑</button>
+      </td>
+    </tr>
+  `).join('') || `<tr><td colspan="10" class="empty">لا توجد طلبات مطابقة</td></tr>`;
+
+  document.getElementById('ordersTotal').textContent = fmt(rows.reduce((s,o)=>s+(Number(o.value)||0),0));
+}
+
+document.getElementById('ordStatusFilter').addEventListener('change', renderOrders);
+document.getElementById('ordSourceFilter').addEventListener('change', renderOrders);
+document.getElementById('ordSearch').addEventListener('input', renderOrders);
+
+function openModal(html){
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('modalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='modalOverlay') closeModal(); });
+
+function orderFormHtml(o){
+  o = o || {date: new Date().toISOString().slice(0,10), time:'', restaurant:'دار مدة', customer:'', source:'WhatsApp', status:'قيد التجهيز', value:'', payment:'كاش', notes:''};
+  return `
+    <h3>${o._editing ? 'تعديل الطلب' : 'طلب جديد'}</h3>
+    <div class="field-row">
+      <div class="field"><label>التاريخ</label><input type="date" id="f_date" value="${o.date}"></div>
+      <div class="field"><label>الوقت</label><input type="text" id="f_time" placeholder="08:00AM" value="${o.time||''}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>المطعم</label>
+        <select id="f_restaurant">
+          <option ${o.restaurant==='دار مدة'?'selected':''}>دار مدة</option>
+          <option ${o.restaurant==='ماجلة'?'selected':''}>ماجلة</option>
+        </select>
+      </div>
+      <div class="field"><label>المصدر</label>
+        <select id="f_source">
+          ${["WhatsApp","Instagram","الموقع الإلكتروني","تطبيق توصيل","أخرى"].map(s=>`<option ${o.source===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>اسم العميل</label><input type="text" id="f_customer" value="${o.customer||''}" placeholder="اسم العميل"></div>
+    <div class="field-row">
+      <div class="field"><label>الحالة</label>
+        <select id="f_status">
+          ${["قيد التجهيز","تم التجهيز","تم التسليم","ملغي"].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>طريقة الدفع</label>
+        <select id="f_payment">
+          ${["كاش","شبكة","تحويل"].map(s=>`<option ${o.payment===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>قيمة الطلب (ريال)</label><input type="number" id="f_value" value="${o.value||''}"></div>
+    <div class="field"><label>ملاحظات</label><textarea id="f_notes" rows="2">${o.notes||''}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn" id="f_save">${o._editing?'حفظ التعديل':'إضافة الطلب'}</button>
+      <button class="btn secondary" onclick="closeModal()">إلغاء</button>
+    </div>
+  `;
+}
+
+document.getElementById('btnAddOrder').addEventListener('click', ()=>{
+  openModal(orderFormHtml());
+  document.getElementById('f_save').addEventListener('click', async ()=>{
+    const val = document.getElementById('f_value').value;
+    if(!val){ toast('الرجاء إدخال قيمة الطلب'); return; }
+    const newOrder = {
+      id: STATE.orders.length ? Math.max(...STATE.orders.map(o=>Number(o.id)||0))+1 : 3000,
+      date: document.getElementById('f_date').value,
+      time: document.getElementById('f_time').value,
+      restaurant: document.getElementById('f_restaurant').value,
+      customer: document.getElementById('f_customer').value,
+      source: document.getElementById('f_source').value,
+      status: document.getElementById('f_status').value,
+      payment: document.getElementById('f_payment').value,
+      value: Number(val),
+      notes: document.getElementById('f_notes').value,
+    };
+    STATE.orders.push(newOrder);
+    await storeSet('orders_v1', STATE.orders);
+    closeModal();
+    toast('تمت إضافة الطلب');
+    renderAll();
+  });
+});
+
+window.editOrder = function(id){
+  const o = STATE.orders.find(x=>String(x.id)===String(id));
+  if(!o) return;
+  openModal(orderFormHtml({...o, _editing:true}));
+  document.getElementById('f_save').addEventListener('click', async ()=>{
+    o.date = document.getElementById('f_date').value;
+    o.time = document.getElementById('f_time').value;
+    o.restaurant = document.getElementById('f_restaurant').value;
+    o.customer = document.getElementById('f_customer').value;
+    o.source = document.getElementById('f_source').value;
+    o.status = document.getElementById('f_status').value;
+    o.payment = document.getElementById('f_payment').value;
+    o.value = Number(document.getElementById('f_value').value);
+    o.notes = document.getElementById('f_notes').value;
+    await storeSet('orders_v1', STATE.orders);
+    closeModal();
+    toast('تم حفظ التعديل');
+    renderAll();
+  });
+};
+
+window.deleteOrder = async function(id){
+  if(!confirm('هل تريد حذف هذا الطلب؟')) return;
+  STATE.orders = STATE.orders.filter(o=>String(o.id)!==String(id));
+  await storeSet('orders_v1', STATE.orders);
+  toast('تم حذف الطلب');
+  renderAll();
+};
+
+/* ============================================================
+   INVENTORY
+============================================================ */
+function invStatus(i){
+  const qty = Number(i.qty), th = Number(i.threshold);
+  if(qty<=0) return {label:'نفذ', cls:'danger'};
+  if(qty<=th) return {label:'منخفض', cls:'warn'};
+  return {label:'كافٍ', cls:'ok'};
+}
+
+function renderInventory(){
+  let rows = filteredInventory();
+  const q = document.getElementById('invSearch').value.trim().toLowerCase();
+  if(q) rows = rows.filter(i=>i.name.toLowerCase().includes(q));
+  rows = [...rows].sort((a,b)=> a.name.localeCompare(b.name,'ar'));
+
+  document.getElementById('invBody').innerHTML = rows.map(i=>{
+    const st = invStatus(i);
+    const val = Number(i.qty)*Number(i.cost);
+    return `
+    <tr class="${st.cls==='danger'?'row-danger': st.cls==='warn'?'row-warn':''}">
+      <td>${i.name}</td>
+      <td>${i.unit}</td>
+      <td class="num">
+        <button class="icon-btn" onclick="adjustInv('${i.id}',-1)">−</button>
+        <span class="num">${i.qty}</span>
+        <button class="icon-btn" onclick="adjustInv('${i.id}',1)">+</button>
+      </td>
+      <td class="num">${i.threshold}</td>
+      <td class="num">${fmt(i.cost)}</td>
+      <td class="num">${fmt(val)}</td>
+      <td><span class="pill ${st.cls}">${st.label}</span></td>
+      <td>
+        <button class="icon-btn" onclick="editInv('${i.id}')" title="تعديل">✎</button>
+        <button class="icon-btn" onclick="deleteInv('${i.id}')" title="حذف">🗑</button>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8" class="empty">لا توجد مواد مضافة</td></tr>`;
+
+  document.getElementById('invTotal').textContent = fmt(rows.reduce((s,i)=>s+Number(i.qty)*Number(i.cost),0));
+}
+document.getElementById('invSearch').addEventListener('input', renderInventory);
+
+function invFormHtml(i){
+  i = i || {name:'', unit:'كجم', qty:0, threshold:5, cost:0};
+  return `
+    <h3>${i._editing?'تعديل مادة':'مادة جديدة'}</h3>
+    <div class="field"><label>اسم المادة</label><input type="text" id="i_name" value="${i.name}"></div>
+    <div class="field-row">
+      <div class="field"><label>الوحدة</label><input type="text" id="i_unit" value="${i.unit}" placeholder="كجم / لتر / عدد"></div>
+      <div class="field"><label>الكمية الحالية</label><input type="number" id="i_qty" value="${i.qty}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>حد إعادة الطلب</label><input type="number" id="i_threshold" value="${i.threshold}"></div>
+      <div class="field"><label>تكلفة الوحدة (ريال)</label><input type="number" id="i_cost" value="${i.cost}"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="i_save">${i._editing?'حفظ التعديل':'إضافة'}</button>
+      <button class="btn secondary" onclick="closeModal()">إلغاء</button>
+    </div>
+  `;
+}
+document.getElementById('btnAddInv').addEventListener('click', ()=>{
+  openModal(invFormHtml());
+  document.getElementById('i_save').addEventListener('click', async ()=>{
+    const name = document.getElementById('i_name').value.trim();
+    if(!name){ toast('الرجاء إدخال اسم المادة'); return; }
+    STATE.inventory.push({
+      id: uid('inv_'), name,
+      unit: document.getElementById('i_unit').value,
+      qty: Number(document.getElementById('i_qty').value),
+      threshold: Number(document.getElementById('i_threshold').value),
+      cost: Number(document.getElementById('i_cost').value),
+      updated: new Date().toISOString().slice(0,10)
+    });
+    await storeSet('inventory_v1', STATE.inventory);
+    closeModal(); toast('تمت إضافة المادة'); renderAll();
+  });
+});
+window.editInv = function(id){
+  const i = STATE.inventory.find(x=>x.id===id);
+  if(!i) return;
+  openModal(invFormHtml({...i, _editing:true}));
+  document.getElementById('i_save').addEventListener('click', async ()=>{
+    i.name = document.getElementById('i_name').value.trim();
+    i.unit = document.getElementById('i_unit').value;
+    i.qty = Number(document.getElementById('i_qty').value);
+    i.threshold = Number(document.getElementById('i_threshold').value);
+    i.cost = Number(document.getElementById('i_cost').value);
+    i.updated = new Date().toISOString().slice(0,10);
+    await storeSet('inventory_v1', STATE.inventory);
+    closeModal(); toast('تم حفظ التعديل'); renderAll();
+  });
+};
+window.deleteInv = async function(id){
+  if(!confirm('حذف هذه المادة من المخزون؟')) return;
+  STATE.inventory = STATE.inventory.filter(i=>i.id!==id);
+  await storeSet('inventory_v1', STATE.inventory);
+  toast('تم الحذف'); renderAll();
+};
+window.adjustInv = async function(id, delta){
+  const i = STATE.inventory.find(x=>x.id===id);
+  if(!i) return;
+  i.qty = Math.max(0, Number(i.qty)+delta);
+  i.updated = new Date().toISOString().slice(0,10);
+  await storeSet('inventory_v1', STATE.inventory);
+  renderAll();
+};
+
+/* ============================================================
+   EXPENSES
+============================================================ */
+(function initExpenseFilter(){
+  const sel = document.getElementById('expTypeFilter');
+  EXPENSE_TYPES.forEach(t=>{
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+  });
+})();
+
+function renderExpenses(){
+  let rows = filteredExpenses();
+  const type = document.getElementById('expTypeFilter').value;
+  const q = document.getElementById('expSearch').value.trim().toLowerCase();
+  if(type!=='all') rows = rows.filter(e=>e.type===type);
+  if(q) rows = rows.filter(e=>(e.desc||'').toLowerCase().includes(q));
+  rows = [...rows].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+
+  document.getElementById('expBody').innerHTML = rows.map(e=>`
+    <tr>
+      <td>${e.date}</td>
+      <td>${restoBadge(e.restaurant)}</td>
+      <td>${e.type}</td>
+      <td>${e.desc||'—'}</td>
+      <td class="num">${fmt(e.amount)}</td>
+      <td>${e.payment||'—'}</td>
+      <td><button class="icon-btn" onclick="deleteExp('${e.id}')" title="حذف">🗑</button></td>
+    </tr>
+  `).join('') || `<tr><td colspan="7" class="empty">لا توجد مصروفات مسجلة بعد</td></tr>`;
+
+  document.getElementById('expTotal').textContent = fmt(rows.reduce((s,e)=>s+(Number(e.amount)||0),0));
+
+  const byType = {};
+  rows.forEach(e=>{ byType[e.type] = (byType[e.type]||0) + Number(e.amount||0); });
+  drawChart('chartExpByType', 'bar', {
+    labels: Object.keys(byType),
+    datasets:[{ data: Object.values(byType), backgroundColor:'#B8862E', borderRadius:5, maxBarThickness:26 }]
+  }, {indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true, grid:{color:'#E5DCC5'}}, y:{grid:{display:false}}}});
+}
+document.getElementById('expTypeFilter').addEventListener('change', renderExpenses);
+document.getElementById('expSearch').addEventListener('input', renderExpenses);
+
+function expFormHtml(){
+  return `
+    <h3>مصروف جديد</h3>
+    <div class="field-row">
+      <div class="field"><label>التاريخ</label><input type="date" id="e_date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label>المطعم</label>
+        <select id="e_restaurant">
+          <option>دار مدة</option><option>ماجلة</option><option>مشترك</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>نوع المصروف</label>
+      <select id="e_type">${EXPENSE_TYPES.map(t=>`<option>${t}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>البيان</label><input type="text" id="e_desc" placeholder="مثال: فاتورة كهرباء المطبخ"></div>
+    <div class="field-row">
+      <div class="field"><label>المبلغ (ريال)</label><input type="number" id="e_amount"></div>
+      <div class="field"><label>طريقة الدفع</label>
+        <select id="e_payment"><option>كاش</option><option>شبكة</option><option>تحويل</option></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="e_save">إضافة المصروف</button>
+      <button class="btn secondary" onclick="closeModal()">إلغاء</button>
+    </div>
+  `;
+}
+document.getElementById('btnAddExp').addEventListener('click', ()=>{
+  openModal(expFormHtml());
+  document.getElementById('e_save').addEventListener('click', async ()=>{
+    const amount = document.getElementById('e_amount').value;
+    if(!amount){ toast('الرجاء إدخال المبلغ'); return; }
+    STATE.expenses.push({
+      id: uid('exp_'),
+      date: document.getElementById('e_date').value,
+      restaurant: document.getElementById('e_restaurant').value,
+      type: document.getElementById('e_type').value,
+      desc: document.getElementById('e_desc').value,
+      amount: Number(amount),
+      payment: document.getElementById('e_payment').value,
+    });
+    await storeSet('expenses_v1', STATE.expenses);
+    closeModal(); toast('تمت إضافة المصروف'); renderAll();
+  });
+});
+window.deleteExp = async function(id){
+  if(!confirm('حذف هذا المصروف؟')) return;
+  STATE.expenses = STATE.expenses.filter(e=>e.id!==id);
+  await storeSet('expenses_v1', STATE.expenses);
+  toast('تم الحذف'); renderAll();
+};
+
+/* ============================================================
+   STAFF
+============================================================ */
+function renderStaff(){
+  const rows = filteredStaff();
+  const total = rows.reduce((s,p)=>s+(Number(p.salary)||0),0);
+  const paid = rows.filter(p=>p.paid).reduce((s,p)=>s+(Number(p.salary)||0),0);
+  document.getElementById('staffKpis').innerHTML = [
+    {label:'عدد الموظفين', value: rows.length},
+    {label:'إجمالي الرواتب الشهرية', value: fmt(total)},
+    {label:'تم صرفه هذا الشهر', value: fmt(paid)},
+    {label:'متبقٍ للصرف', value: fmt(total-paid), danger:(total-paid)>0},
+  ].map(k=>`
+    <div class="kpi"><div class="label">${k.label}</div><div class="value ${k.danger?'danger':''}">${k.value}</div></div>
+  `).join('');
+
+  document.getElementById('staffBody').innerHTML = rows.map(p=>`
+    <tr>
+      <td>${p.name}</td>
+      <td>${p.role||'—'}</td>
+      <td>${restoBadge(p.restaurant)}</td>
+      <td class="num">${fmt(p.salary)}</td>
+      <td><button class="pill ${p.paid?'ok':'warn'}" style="border:none;cursor:pointer" onclick="toggleStaffPaid('${p.id}')">${p.paid?'مدفوع ✓':'غير مدفوع'}</button></td>
+      <td>${p.notes||'—'}</td>
+      <td><button class="icon-btn" onclick="deleteStaff('${p.id}')" title="حذف">🗑</button></td>
+    </tr>
+  `).join('') || `<tr><td colspan="7" class="empty">لا يوجد موظفون مضافون بعد</td></tr>`;
+
+  document.getElementById('staffTotal').textContent = fmt(total);
+}
+
+function staffFormHtml(){
+  return `
+    <h3>موظف جديد</h3>
+    <div class="field"><label>الاسم</label><input type="text" id="s_name"></div>
+    <div class="field-row">
+      <div class="field"><label>الوظيفة</label><input type="text" id="s_role" placeholder="طباخ / مندوب توصيل / ..."></div>
+      <div class="field"><label>المطعم</label>
+        <select id="s_restaurant"><option>دار مدة</option><option>ماجلة</option><option>مشترك</option></select>
+      </div>
+    </div>
+    <div class="field"><label>الراتب الشهري (ريال)</label><input type="number" id="s_salary"></div>
+    <div class="field"><label>ملاحظات</label><textarea id="s_notes" rows="2"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" id="s_save">إضافة الموظف</button>
+      <button class="btn secondary" onclick="closeModal()">إلغاء</button>
+    </div>
+  `;
+}
+document.getElementById('btnAddStaff').addEventListener('click', ()=>{
+  openModal(staffFormHtml());
+  document.getElementById('s_save').addEventListener('click', async ()=>{
+    const name = document.getElementById('s_name').value.trim();
+    if(!name){ toast('الرجاء إدخال اسم الموظف'); return; }
+    STATE.staff.push({
+      id: uid('stf_'), name,
+      role: document.getElementById('s_role').value,
+      restaurant: document.getElementById('s_restaurant').value,
+      salary: Number(document.getElementById('s_salary').value)||0,
+      notes: document.getElementById('s_notes').value,
+      paid: false,
+    });
+    await storeSet('staff_v1', STATE.staff);
+    closeModal(); toast('تمت إضافة الموظف'); renderAll();
+  });
+});
+window.toggleStaffPaid = async function(id){
+  const p = STATE.staff.find(x=>x.id===id);
+  if(!p) return;
+  p.paid = !p.paid;
+  await storeSet('staff_v1', STATE.staff);
+  renderAll();
+};
+window.deleteStaff = async function(id){
+  if(!confirm('حذف هذا الموظف؟')) return;
+  STATE.staff = STATE.staff.filter(p=>p.id!==id);
+  await storeSet('staff_v1', STATE.staff);
+  toast('تم الحذف'); renderAll();
+};
+
+/* ============================================================
+   MENU REFERENCE
+============================================================ */
+(function initMenuFilter(){
+  const depts = [...new Set(SEED.items.map(i=>i.dept).filter(Boolean))];
+  const sel = document.getElementById('menuDeptFilter');
+  depts.forEach(d=>{
+    const opt = document.createElement('option'); opt.value=d; opt.textContent=d; sel.appendChild(opt);
+  });
+})();
+
+function renderMenu(){
+  let rows = filteredMenu();
+  const dept = document.getElementById('menuDeptFilter').value;
+  const q = document.getElementById('menuSearch').value.trim().toLowerCase();
+  if(dept!=='all') rows = rows.filter(i=>i.dept===dept);
+  if(q) rows = rows.filter(i=>(i.name||'').toLowerCase().includes(q));
+  rows = rows.filter(i=>i.status==='نشط');
+
+  document.getElementById('menuBody').innerHTML = rows.map(i=>{
+    const pct = i.price ? Math.round((i.margin/i.price)*100) : 0;
+    return `
+    <tr>
+      <td>${i.dept||'—'}</td>
+      <td>${i.name}</td>
+      <td>${restoBadge(i.restaurant)}</td>
+      <td class="num">${fmt(i.price)}</td>
+      <td class="num">${fmt(i.cost)}</td>
+      <td class="num">${fmt(i.margin)}</td>
+      <td class="num">${pct}%</td>
+      <td><span class="pill ok">${i.status}</span></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8" class="empty">لا توجد أصناف مطابقة</td></tr>`;
+}
+document.getElementById('menuDeptFilter').addEventListener('change', renderMenu);
+document.getElementById('menuSearch').addEventListener('input', renderMenu);
+
+/* ============================================================
+   INIT
+============================================================ */
+function renderAll(){
+  renderOverview();
+  renderOrders();
+  renderInventory();
+  renderExpenses();
+  renderStaff();
+  renderMenu();
+}
+
+(async function init(){
+  await loadAll();
+  renderAll();
+  if(!STORAGE_OK){
+    toast('تعذر حفظ البيانات — سيتم فقدان التعديلات عند إغلاق الصفحة');
+  }
+})();
+</script>
+</body>
+</html>
